@@ -1,0 +1,49 @@
+[system]
+# Load language from environment variable(It is set by the hook)
+language = "${env:DBGPT_LANG:-zh}"
+api_keys = []
+encrypt_key = "your_secret_key"
+
+# Server Configurations
+[service.web]
+host = "0.0.0.0"
+port = 5670
+
+[service.web.database]
+type = "sqlite"
+path = "pilot/meta_data/dbgpt.db"
+[service.model.worker]
+host = "127.0.0.1"
+
+[rag.storage]
+[rag.storage.vector]
+type = "chroma"
+persist_path = "pilot/data"
+
+# Model Configurations
+[models]
+[[models.llms]]
+name = "deepseek-chat"
+provider = "proxy/deepseek"
+api_base = "https://api.deepseek.com/v1"
+api_key = "请在此填入你的 DeepSeek API Key"
+thinking_enabled = false
+# 单次 LLM 请求总超时（秒），默认 240s。设为 60s 避免上游偶发慢响应把单轮问答拖死。
+# 数据问答正常 3-7s，快报等长任务走异步/降级，不需要在这里等太久。
+timeout = 60
+
+[[models.embeddings]]
+name = "BAAI/bge-large-zh-v1.5"
+provider = "hf"
+# If not provided, the model will be downloaded from the Hugging Face model hub
+# uncomment the following line to specify the model path in the local file system
+# path = "the-model-path-in-the-local-file-system"
+path = "models/bge-large-zh-v1.5"
+
+# 本地 CPU 跑 cross-encoder rerank 每次约 45s（2026-10 实测），导致问答 TTFB 50-65s、
+# 小程序 60s 超时失败，暂时禁用；若需恢复请改用 rerank API（如 SiliconFlow）而非本地 hf
+# [[models.rerankers]]
+# name = "BAAI/bge-reranker-v2-m3"
+# provider = "hf"
+# path = "models/bge-reranker-v2-m3"
+# max_length = 1024

@@ -28,6 +28,7 @@ miniapp/                    小程序源码（Taro 项目）
     utils/answerFormat.ts   答案清洗与表格/图表格式化
     store/chatStore.ts      会话与消息状态
     **/__tests__/           前端单元测试（Vitest）
+backend/                    后端部署包（建表脚本、数据、MCP 服务、配置模板）
 docs/
   whu_admission_system_design.md/.docx    系统总体设计与详细设计
   assets/architecture.png                  系统架构图
@@ -65,6 +66,8 @@ npm run build:weapp
 1. PostgreSQL 招生数据库（分数位次、招生计划、专业录取明细等表）；
 2. MCP 只读 SQL 服务，向模型暴露表结构与查询能力；
 3. DB-GPT 问答服务，提供知识库问答、SQL 问答与多步推理三类接口。
+
+三者的建表脚本、数据、MCP 服务源码与配置模板都在 [`backend/`](backend/README.md) 中，按该目录的 README 即可在另一台机器复现。该包不含任何密钥与数据库口令，均通过环境变量注入。
 
 三者启动后，前端会自动改用真实数据，离线样例不再触发。
 
