@@ -299,11 +299,13 @@ python business_tests/run_business_tests.py --suite full --base-url http://127.0
 |---|---|---|
 | DB-GPT 招生模块 | `pytest -q DB-GPT/packages/dbgpt-app/src/dbgpt_app/tests/admission` | 41 项通过 |
 | MCP 只读服务 | `$env:PYTHONPATH="e:\postgres agent\db-mcp"; pytest -q db-mcp/test_db_mcp_server.py` | 10 项通过 |
-| 前端 Vitest | `npm run test:run` | 4 个文件、27 项通过 |
+| 前端 Vitest | `npm run test:run` | 4 个文件、28 项通过 |
 | 业务框架离线单测 | `pytest -q business_tests/test_run_business_tests.py` | 23 项通过 |
 | 业务场景静态校验 | `python business_tests/run_business_tests.py --validate-only` | 24 个场景、29 轮通过 |
 
 前端 TypeScript 检查中仅剩 `node_modules` 内的既有类型噪音；`src` 目录错误已清零。
+
+前端测试中额外覆盖了离线演示降级：后端不可达时由 `src/services/demo.ts` 逐字输出内置样例并在末尾标注"离线演示数据"，非网络类错误仍正常上报、不被演示逻辑掩盖。
 
 ### 7.2 业务测试实测结果
 
