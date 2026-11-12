@@ -1,0 +1,149 @@
+@use '@/styles/variables.scss' as *;
+
+.markdown {
+  width: 100%;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  line-height: $line-height-loose;
+  word-break: break-word;
+}
+
+.inline {
+  display: inline;
+}
+
+.bold {
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.inlineCode {
+  background-color: $color-bg-hover;
+  color: $color-primary;
+  padding: 2rpx 8rpx;
+  border-radius: $radius-xs;
+  font-size: $font-size-sm;
+}
+
+.heading {
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin: $spacing-md 0 $spacing-sm;
+  line-height: $line-height-tight;
+
+  &.h1 {
+    font-size: $font-size-xxl;
+  }
+  &.h2 {
+    font-size: $font-size-xl;
+  }
+  &.h3 {
+    font-size: $font-size-lg;
+  }
+  &.h4 {
+    font-size: $font-size-md;
+  }
+}
+
+.paragraph {
+  margin: $spacing-sm 0;
+}
+
+.quote {
+  margin: $spacing-sm 0;
+  padding: $spacing-sm $spacing-md;
+  border-left: 6rpx solid $color-primary-light;
+  background-color: $color-bg-hover;
+  border-radius: 0 $radius-sm $radius-sm 0;
+  color: $color-text-secondary;
+}
+
+.divider {
+  height: 1rpx;
+  background-color: $color-border;
+  margin: $spacing-md 0;
+}
+
+.codeBlock {
+  margin: $spacing-sm 0;
+  padding: $spacing-md;
+  background-color: #2d3436;
+  border-radius: $radius-md;
+  overflow: hidden;
+}
+
+.codeText {
+  color: #dfe6e9;
+  font-size: $font-size-sm;
+  font-family: monospace;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.list {
+  margin: $spacing-sm 0;
+}
+
+.listItem {
+  display: flex;
+  align-items: flex-start;
+  margin: $spacing-xs 0;
+}
+
+.listMarker {
+  flex-shrink: 0;
+  width: 40rpx;
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+}
+
+.listContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.tableScroll {
+  width: 100%;
+  margin: $spacing-sm 0;
+}
+
+.table {
+  display: inline-flex;
+  flex-direction: column;
+  min-width: 100%;
+  border: 1rpx solid $color-border;
+  border-radius: $radius-md;
+  overflow: hidden;
+}
+
+.tableRow {
+  display: flex;
+  flex-direction: row;
+  border-bottom: 1rpx solid $color-divider;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.tableHeader {
+  background-color: $color-primary;
+
+  .tableCell {
+    color: $color-text-white;
+    font-weight: $font-weight-medium;
+  }
+}
+
+.tableCell {
+  flex-shrink: 0;
+  min-width: 160rpx;
+  padding: $spacing-sm $spacing-md;
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  border-right: 1rpx solid $color-divider;
+
+  &:last-child {
+    border-right: none;
+  }
+}

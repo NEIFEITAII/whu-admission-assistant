@@ -1,0 +1,47 @@
+// ============================================
+// 主题配色变量 - 武汉大学招生咨询
+// ============================================
+
+// 品牌主题色：珞珈绿（丰富色阶，支持深浅层次）
+$color-primary: #1b7a4d;
+$color-primary-light: #4fa87e;
+$color-primary-dark: #0e5232;
+$color-primary-50: #e8f5ee;
+$color-primary-100: #d1ebdc;
+$color-primary-600: #156941;
+
+// 功能色
+$color-success: #00b42a;
+$color-warning: #ff7d00;
+$color-error: #f53f3f;
+$color-info: #1b7a4d;
+
+// 业务色：樱花粉（点缀，丰富色阶）
+$color-accent: #e8759c;
+$color-accent-light: #fdeff4;
+$color-accent-dark: #d15a82;
+$color-accent-50: #fdeef3;
+
+// 渐变预设
+$gradient-primary: linear-gradient(135deg, $color-primary-dark 0%, $color-primary 55%, $color-primary-light 100%);
+$gradient-primary-soft: linear-gradient(135deg, rgba(27, 122, 77, 0.08) 0%, rgba(79, 168, 126, 0.14) 100%);
+$gradient-accent: linear-gradient(135deg, $color-accent-dark 0%, $color-accent 100%);
+$gradient-accent-soft: linear-gradient(135deg, #f5a6c4 0%, $color-accent 100%);
+$gradient-dark: linear-gradient(135deg, #0e5232 0%, #1b7a4d 60%, #2a8f5d 100%);
+
+// 背景色
+$color-bg-page: #f4f7f4;
+$color-bg-card: #ffffff;
+$color-bg-hover: #eef4ef;
+$color-bg-warm: #fafbf7;
+
+// 文本色
+$color-text-primary: #1d2129;
+$color-text-secondary: #4e5969;
+$color-text-tertiary: #86909c;
+$color-text-disabled: #c9cdd4;
+$color-text-white: #ffffff;
+
+// 边框色
+$color-border: #e3e9e4;
+$color-divider: #eef2ee;

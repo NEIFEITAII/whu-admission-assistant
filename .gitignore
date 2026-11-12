@@ -1,0 +1,32 @@
+# 依赖
+node_modules/
+.pnpm-store/
+
+# 构建产物
+dist/
+dist-h5/
+dist-weapp/
+.swc/
+.pai/
+.temp/
+.cache/
+
+# 微信开发者工具私有配置（含本地设置与本机路径）
+project.private.config.json
+
+# 环境变量与密钥
+.env
+.env.*
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# 测试运行产物
+tests/business/results/
+*.log

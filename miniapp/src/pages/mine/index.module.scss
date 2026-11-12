@@ -1,0 +1,257 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  background-color: $color-bg-page;
+}
+
+// 头部：珞珈绿渐变 + 樱花粉装饰圆
+.profile {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: $spacing-xl $page-padding $spacing-lg;
+  background: linear-gradient(135deg, $color-primary-dark 0%, $color-primary 55%, $color-primary-light 100%);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -100rpx;
+    right: -80rpx;
+    width: 320rpx;
+    height: 320rpx;
+    border-radius: $radius-round;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 56rpx;
+    right: 72rpx;
+    width: 120rpx;
+    height: 120rpx;
+    border-radius: $radius-round;
+    background: rgba(237, 143, 166, 0.35);
+  }
+}
+
+.avatarCircle {
+  width: 128rpx;
+  height: 128rpx;
+  border-radius: $radius-round;
+  background-color: rgba(255, 255, 255, 0.2);
+  border: 2rpx solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8rpx 24rpx rgba(14, 82, 50, 0.3);
+  @include flex-center;
+}
+
+.avatarText {
+  color: $color-text-white;
+  font-size: 52rpx;
+  font-weight: $font-weight-bold;
+}
+
+.appName {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-semibold;
+  color: $color-text-white;
+  margin-top: $spacing-md;
+  letter-spacing: 2rpx;
+}
+
+.appDesc {
+  font-size: $font-size-sm;
+  color: rgba(255, 255, 255, 0.8);
+  margin-top: $spacing-xs;
+  letter-spacing: 4rpx;
+}
+
+.section {
+  margin-top: $spacing-md;
+  padding: 0 $page-padding;
+}
+
+.sectionTitle {
+  display: block;
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  margin-bottom: $spacing-sm;
+  padding-left: $spacing-xs;
+  letter-spacing: 1rpx;
+}
+
+.card {
+  background-color: $color-bg-card;
+  border-radius: $radius-lg;
+  border: 1rpx solid rgba(229, 230, 235, 0.6);
+  box-shadow: $shadow-card;
+  padding: $spacing-md $spacing-lg;
+}
+
+.fieldRow {
+  display: flex;
+  flex-direction: column;
+}
+
+.fieldLabel {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-sm;
+}
+
+.fieldInput {
+  height: 72rpx;
+  background-color: $color-bg-page;
+  border: 2rpx solid transparent;
+  border-radius: $radius-sm;
+  padding: 0 $spacing-md;
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  box-sizing: border-box;
+  transition: border-color $transition-fast, background-color $transition-fast;
+
+  &:focus {
+    border-color: rgba(27, 122, 77, 0.35);
+    background-color: #f1f8f3;
+  }
+}
+
+.placeholder {
+  color: $color-text-tertiary;
+  font-size: $font-size-sm;
+}
+
+.btnRow {
+  display: flex;
+  flex-direction: row;
+  margin-top: $spacing-md;
+}
+
+.primaryBtn {
+  @include button-reset;
+  flex: 1;
+  height: $button-height-sm;
+  border-radius: $radius-button;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  margin-right: $spacing-sm;
+  transition: transform $transition-fast, opacity $transition-fast;
+
+  &:active {
+    transform: scale(0.96);
+    opacity: 0.9;
+  }
+}
+
+.primaryBtnText {
+  color: $color-text-white;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+}
+
+.ghostBtn {
+  @include button-reset;
+  flex: 1;
+  height: $button-height-sm;
+  border-radius: $radius-button;
+  background-color: $color-bg-card;
+  border: 1rpx solid $color-primary;
+  transition: background-color $transition-fast;
+
+  &:active {
+    background-color: #e9f4ed;
+  }
+}
+
+.ghostBtnText {
+  color: $color-primary;
+  font-size: $font-size-sm;
+}
+
+.fieldHint {
+  display: block;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-top: $spacing-md;
+  line-height: $line-height-normal;
+}
+
+.dataRow {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-md 0;
+  border-bottom: 1rpx solid $color-divider;
+}
+
+.lastRow {
+  border-bottom: none;
+}
+
+.dataLabel {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+}
+
+.dataValue {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.dataHint {
+  display: block;
+  font-size: $font-size-xs;
+  color: $color-warning;
+  margin-top: $spacing-md;
+  line-height: $line-height-normal;
+}
+
+.storageRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.storageInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.dangerBtn {
+  @include button-reset;
+  flex-shrink: 0;
+  height: $button-height-sm;
+  padding: 0 $spacing-lg;
+  border-radius: $radius-button;
+  border: 1rpx solid $color-error;
+  background-color: $color-bg-card;
+  margin-left: $spacing-md;
+  transition: background-color $transition-fast, transform $transition-fast;
+
+  &:active {
+    background-color: #fff3f3;
+    transform: scale(0.96);
+  }
+}
+
+.dangerBtnText {
+  color: $color-error;
+  font-size: $font-size-sm;
+}
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: $spacing-xl 0;
+}
+
+.footerText {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  line-height: $line-height-loose;
+}

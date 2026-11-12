@@ -1,0 +1,181 @@
+@use '@/styles/variables.scss' as *;
+
+.messageRow {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: $spacing-lg;
+  padding: 0 $page-padding;
+}
+
+.userRow {
+  flex-direction: row;
+  justify-content: flex-end;
+}
+
+.assistantRow {
+  flex-direction: row;
+  justify-content: flex-start;
+}
+
+.avatar {
+  flex-shrink: 0;
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: $radius-round;
+  @include flex-center;
+}
+
+// 助手标识占位（BrandMark 自带圆底，这里只负责间距）
+.avatarSlot {
+  flex-shrink: 0;
+  margin-right: $spacing-sm;
+}
+
+.avatarUser {
+  background: $gradient-accent;
+  margin-left: $spacing-sm;
+  box-shadow: $shadow-glow-accent;
+}
+
+.avatarText {
+  color: $color-text-white;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+}
+
+// 气泡包裹层
+.bubbleWrap {
+  display: flex;
+  flex-direction: column;
+  max-width: 520rpx;
+}
+
+.bubble {
+  max-width: 520rpx;
+  padding: $spacing-md $spacing-lg;
+  border-radius: $radius-lg;
+  font-size: $font-size-md;
+  line-height: $line-height-normal;
+  word-break: break-word;
+}
+
+.userBubble {
+  background: $gradient-primary;
+  border-top-right-radius: $radius-sm;
+  box-shadow: $shadow-glow-primary;
+  transition: opacity $transition-fast, transform $transition-fast;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.99);
+  }
+}
+
+.userText {
+  color: $color-text-white;
+  font-size: $font-size-md;
+  line-height: $line-height-normal;
+}
+
+.assistantBubble {
+  background-color: $color-bg-card;
+  border-top-left-radius: $radius-sm;
+  border: 1rpx solid #ebf1ed;
+  box-shadow: $shadow-card;
+}
+
+.errorBubble {
+  border: 1rpx solid rgba(245, 63, 63, 0.45);
+  background-color: #fff7f7;
+}
+
+.assistantContent {
+  width: 100%;
+}
+
+// 系统提示胶囊
+.noticeRow {
+  display: flex;
+  justify-content: center;
+  margin: $spacing-sm 0 $spacing-md;
+  padding: 0 $page-padding;
+  animation: noticeIn 0.45s ease-out;
+}
+
+.noticeText {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  background-color: #eef4ef;
+  border: 1rpx solid #e3e9e4;
+  padding: 8rpx 26rpx;
+  border-radius: $radius-round;
+}
+
+@keyframes noticeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-10rpx);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.typing {
+  display: flex;
+  align-items: center;
+  height: 48rpx;
+}
+
+.typingHint {
+  margin-left: $spacing-xs;
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+}
+
+.dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: $radius-round;
+  background-color: $color-primary-light;
+  margin-right: 8rpx;
+  animation: blink 1.2s infinite ease-in-out;
+
+  &:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+  &:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+}
+
+@keyframes blink {
+  0%, 80%, 100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.cursor {
+  display: inline-block;
+  width: 4rpx;
+  height: 28rpx;
+  border-radius: 2rpx;
+  background-color: $color-primary;
+  margin-top: $spacing-xs;
+  animation: cursorBlink 0.8s infinite;
+}
+
+@keyframes cursorBlink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}

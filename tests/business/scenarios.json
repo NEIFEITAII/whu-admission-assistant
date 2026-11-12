@@ -1,0 +1,406 @@
+{
+  "version": 1,
+  "scenarios": [
+    {
+      "id": "policy_01_national_special",
+      "title": "国家专项报考政策",
+      "capability": "policy",
+      "tags": ["policy", "national_special"],
+      "smoke": true,
+      "turns": [
+        {
+          "mode": "chat_knowledge",
+          "question": "湖北考生报考武汉大学国家专项计划，需要满足哪些基本条件？请依据招生政策说明。",
+          "contains_all": ["国家专项"],
+          "contains_any": ["报考条件", "查阅", "官方", "招生简章"],
+          "max_elapsed": 120
+        }
+      ]
+    },
+    {
+      "id": "policy_02_major_transfer",
+      "title": "转专业规则",
+      "capability": "policy",
+      "tags": ["policy", "major_transfer"],
+      "smoke": true,
+      "turns": [
+        {
+          "mode": "chat_knowledge",
+          "question": "武汉大学本科生转专业的一般申请条件和办理流程是什么？",
+          "contains_all": ["转专业"],
+          "contains_any": ["申请", "考核", "条件", "流程"]
+        }
+      ]
+    },
+    {
+      "id": "policy_03_dormitory",
+      "title": "宿舍生活条件",
+      "capability": "policy",
+      "tags": ["policy", "campus_life"],
+      "turns": [
+        {
+          "mode": "chat_knowledge",
+          "question": "武汉大学本科生宿舍的基本住宿条件和生活设施怎么样？",
+          "contains_all": ["宿舍"],
+          "contains_any": ["空调", "热水", "卫浴", "四人间", "上床下桌"]
+        }
+      ]
+    },
+    {
+      "id": "policy_04_financial_aid",
+      "title": "奖助学金政策",
+      "capability": "policy",
+      "tags": ["policy", "financial_aid"],
+      "smoke": true,
+      "turns": [
+        {
+          "mode": "chat_knowledge",
+          "question": "武汉大学本科生奖学金和助学金分别有哪些主要类型？一般如何申请或评审？",
+          "contains_all": ["奖学金", "助学金"],
+          "contains_any": ["申请", "评审", "资助", "奖励"]
+        }
+      ]
+    },
+    {
+      "id": "policy_05_special_vs_regular",
+      "title": "国家专项与普通类差异",
+      "capability": "policy",
+      "tags": ["policy", "national_special"],
+      "turns": [
+        {
+          "mode": "chat_knowledge",
+          "question": "国家专项计划和普通类招生在报考对象、批次及录取规则上有什么主要区别？",
+          "contains_all": ["国家专项", "普通类"],
+          "contains_any": ["区别", "不同", "差异", "面向", "录取"]
+        }
+      ]
+    },
+    {
+      "id": "data_01_score_rank_pairs",
+      "title": "2024物理分数位次同行核验",
+      "capability": "data_query",
+      "tags": ["data", "score_rank", "paired"],
+      "smoke": true,
+      "turns": [
+        {
+          "mode": "chat_with_db_execute",
+          "question": "2024年湖北物理类647分、649分、653分的累计位次分别是多少？请逐分列出分数和对应位次。",
+          "sql_required": true,
+          "min_rows": 3,
+          "expected_values": [647, 3218, 649, 2879, 653, 2315],
+          "paired_values": [[647, 3218], [649, 2879], [653, 2315]],
+          "oracle_sql": "SELECT score, cumulative_count FROM hubei_score_ranks WHERE year = '2024' AND category_norm = '物理' AND score IN (647, 649, 653) ORDER BY score"
+        }
+      ]
+    },
+    {
+      "id": "data_02_plan_totals",
+      "title": "2024与2025招生计划总量",
+      "capability": "data_query",
+      "tags": ["data", "plan"],
+      "smoke": true,
+      "turns": [
+        {
+          "mode": "chat_with_db_execute",
+          "question": "武汉大学2024年和2025年在湖北的招生计划总数分别是多少？请按年份列出。",
+          "sql_required": true,
+          "min_rows": 2,
+          "expected_values": [2024, 1698, 2025, 1704],
+          "paired_values": [[2024, 1698], [2025, 1704]],
+          "oracle_sql": "SELECT year, SUM(plan_count) AS total_plan FROM hubei_major_admissions WHERE year IN ('2024', '2025') GROUP BY year ORDER BY year"
+        }
+      ]
+    },
+    {
+      "id": "data_03_regular_minimum_trend",
+      "title": "近三年物理普通类最低分",
+      "capability": "data_query",
+      "tags": ["data", "admission_score"],
+      "turns": [
+        {
+          "mode": "chat_with_db_execute",
+          "question": "武汉大学2023、2024、2025年在湖北物理类普通类的最低录取分分别是多少？按年份列出。",
+          "sql_required": true,
+          "min_rows": 3,
+          "expected_values": [2023, 644, 2024, 641, 2025, 634],
+          "paired_values": [[2023, 644], [2024, 641], [2025, 634]],
+          "oracle_sql": "SELECT year, min_score FROM whu_school_summary WHERE year IN ('2023', '2024', '2025') AND category = '普通类' AND category_norm = '物理' ORDER BY year"
+        }
+      ]
+    },
+    {
+      "id": "data_04_2025_regular_lines",
+      "title": "2025历史物理普通类院校线",
+      "capability": "data_query",
+      "tags": ["data", "admission_score", "paired"],
+      "smoke": true,
+      "turns": [
+        {
+          "mode": "chat_with_db_execute",
+          "question": "武汉大学2025年在湖北普通类历史类和物理类的最低录取分及对应位次分别是多少？分两行给出。",
+          "sql_required": true,
+          "min_rows": 2,
+          "expected_values": [628, 797, 634, 4125],
+          "paired_values": [[628, 797], [634, 4125]],
+          "oracle_sql": "SELECT category_norm, min_score, min_rank FROM whu_school_summary WHERE year = '2025' AND category = '普通类' ORDER BY category_norm"
+        }
+      ]
+    },
+    {
+      "id": "data_05_physics_chemistry_plan",
+      "title": "2024物理加化学计划",
+      "capability": "data_query",
+      "tags": ["data", "plan", "subject_requirement"],
+      "turns": [
+        {
+          "mode": "chat_with_db_execute",
+          "question": "2024年武汉大学在湖北要求物理+化学的招生专业，总计划人数是多少？",
+          "sql_required": true,
+          "min_rows": 1,
+          "expected_values": [1139],
+          "oracle_sql": "SELECT SUM(plan_count) AS total_plan FROM hubei_major_admissions WHERE year = '2024' AND first_choice_subject = '物理+化学'"
+        }
+      ]
+    },
+    {
+      "id": "data_06_computer_plans",
+      "title": "计算机类两年招生计划",
+      "capability": "data_query",
+      "tags": ["data", "plan", "computer"],
+      "turns": [
+        {
+          "mode": "chat_with_db_execute",
+          "question": "名称包含“计算机”的专业在2023年和2024年的招生计划合计分别是多少？请按年汇总。",
+          "sql_required": true,
+          "min_rows": 2,
+          "expected_values": [2023, 190, 2024, 245],
+          "paired_values": [[2023, 190], [2024, 245]],
+          "oracle_sql": "SELECT year, SUM(plan_count) AS total_plan FROM hubei_major_admissions WHERE major_name LIKE '%计算机%' AND year IN ('2023', '2024') GROUP BY year ORDER BY year"
+        }
+      ]
+    },
+    {
+      "id": "data_07_react_regular_line",
+      "title": "ReAct查询2025物理普通类院校线",
+      "capability": "data_query",
+      "tags": ["data", "react", "admission_score"],
+      "smoke": true,
+      "turns": [
+        {
+          "mode": "chat_with_db_react",
+          "question": "请实际查询数据库：武汉大学2025年湖北物理类普通类最低录取分和对应位次是多少？只汇报最终查询结论。",
+          "expected_values": [634, 4125],
+          "paired_values": [634, 4125],
+          "oracle_sql": "SELECT min_score, min_rank FROM whu_school_summary WHERE year = '2025' AND category = '普通类' AND category_norm = '物理'"
+        }
+      ]
+    },
+    {
+      "id": "analysis_01_plan_change",
+      "title": "招生计划变化分析",
+      "capability": "analysis",
+      "tags": ["analysis", "plan"],
+      "turns": [
+        {
+          "mode": "chat_with_db_execute",
+          "question": "对比武汉大学2024与2025年在湖北的招生计划总数，判断增加了多少人；不要描述成多年持续趋势。",
+          "sql_required": true,
+          "expected_values": [1698, 1704],
+          "paired_values": [[2024, 1698], [2025, 1704]],
+          "forbidden": ["逐年上升", "持续上升", "逐年增加", "持续增长"]
+        }
+      ]
+    },
+    {
+      "id": "analysis_02_physics_chemistry_distribution",
+      "title": "物理加化学计划及分数段分析",
+      "capability": "analysis",
+      "tags": ["analysis", "score_band", "subject_requirement"],
+      "turns": [
+        {
+          "mode": "chat_with_db_execute",
+          "question": "2024年要求物理+化学的专业总计划是多少？不区分招生类别，这些专业2024年录取最低分的完整十分段分布、记录总数、最低分和最高分分别是多少？",
+          "sql_required": true,
+          "min_rows": 2,
+          "expected_values": [1139, 41, 627, 677],
+          "oracle_sql": "WITH plan AS (SELECT SUM(plan_count) AS total_plan FROM hubei_major_admissions WHERE year = '2024' AND first_choice_subject = '物理+化学'), majors AS (SELECT DISTINCT major_name FROM hubei_major_admissions WHERE year = '2024' AND first_choice_subject = '物理+化学'), stats AS (SELECT COUNT(*) AS record_count, MIN(w.min_score) AS min_score, MAX(w.min_score) AS max_score FROM whu_major_records w JOIN majors m ON w.major_name = m.major_name WHERE w.year = '2024' AND w.category_norm = '物理') SELECT plan.total_plan, stats.record_count, stats.min_score, stats.max_score FROM plan CROSS JOIN stats"
+        }
+      ]
+    },
+    {
+      "id": "analysis_03_react_computer_change",
+      "title": "ReAct分析计算机类计划变化",
+      "capability": "analysis",
+      "tags": ["analysis", "react", "computer"],
+      "turns": [
+        {
+          "mode": "chat_with_db_react",
+          "question": "请实际查库并分析：名称包含“计算机”的专业，2023年和2024年招生计划合计各是多少，2024年比2023年增加多少人？",
+          "expected_values": [190, 245, 55],
+          "contains_any": ["增加", "增长", "扩招", "多了"]
+        }
+      ]
+    },
+    {
+      "id": "report_01_2024_admission_brief",
+      "title": "生成2024招生快报",
+      "capability": "report",
+      "tags": ["report", "plan", "score_rank"],
+      "turns": [
+        {
+          "mode": "chat_with_db_react",
+          "question": "请实际查库并生成一份标题含“快报”的《2024年武汉大学湖北招生快报》：列出招生计划总数，并给出2024年物理类647、649、653分的对应累计位次作为参考。",
+          "contains_all": ["快报", "招生计划"],
+          "expected_values": [1698, 647, 3218, 649, 2879, 653, 2315],
+          "paired_values": [[647, 3218], [649, 2879], [653, 2315]]
+        }
+      ]
+    },
+    {
+      "id": "report_02_react_2025_regular_brief",
+      "title": "ReAct生成2025普通类录取快报",
+      "capability": "report",
+      "tags": ["report", "react", "admission_score"],
+      "turns": [
+        {
+          "mode": "chat_with_db_react",
+          "question": "请实际查库并明确生成一份标题含“快报”的2025年武汉大学湖北普通类录取快报，分别列出历史类、物理类最低录取分和对应位次。",
+          "contains_all": ["快报"],
+          "expected_values": [628, 797, 634, 4125],
+          "paired_values": [[628, 797], [634, 4125]]
+        }
+      ]
+    },
+    {
+      "id": "multi_01_execute_followup",
+      "title": "同一Execute引擎追问计划变化",
+      "capability": "multi_turn",
+      "tags": ["multi_turn", "execute", "plan"],
+      "smoke": true,
+      "turns": [
+        {
+          "mode": "chat_with_db_execute",
+          "question": "武汉大学2024年在湖北的招生计划总数是多少？",
+          "sql_required": true,
+          "expected_values": [1698]
+        },
+        {
+          "mode": "chat_with_db_execute",
+          "question": "那2025年呢？请和2024年一起按年份列出计划总数。",
+          "sql_required": true,
+          "min_rows": 2,
+          "expected_values": [2024, 1698, 2025, 1704],
+          "paired_values": [[2024, 1698], [2025, 1704]]
+        }
+      ]
+    },
+    {
+      "id": "multi_02_knowledge_followup",
+      "title": "同一知识库引擎追问转专业",
+      "capability": "multi_turn",
+      "tags": ["multi_turn", "knowledge", "major_transfer"],
+      "turns": [
+        {
+          "mode": "chat_knowledge",
+          "question": "武汉大学本科生转专业通常需要满足哪些基本条件？",
+          "contains_all": ["转专业"],
+          "contains_any": ["条件", "申请", "要求"]
+        },
+        {
+          "mode": "chat_knowledge",
+          "question": "那一般什么时候申请？需要参加考核吗？请接着上一轮说明。",
+          "contains_all": ["申请"],
+          "contains_any": ["考核", "考试", "面试"]
+        }
+      ]
+    },
+    {
+      "id": "multi_03_cross_engine",
+      "title": "跨知识库Execute与ReAct多轮",
+      "capability": "multi_turn",
+      "tags": ["multi_turn", "cross_engine", "react"],
+      "turns": [
+        {
+          "mode": "chat_knowledge",
+          "question": "先说明武汉大学国家专项计划的主要报考条件。",
+          "contains_any": ["国家专项", "专项计划", "报名条件", "资格", "审核"]
+        },
+        {
+          "mode": "chat_with_db_execute",
+          "question": "切换到数据查询：武汉大学2024年和2025年在湖北的招生计划总数分别是多少？",
+          "sql_required": true,
+          "expected_values": [2024, 1698, 2025, 1704],
+          "paired_values": [[2024, 1698], [2025, 1704]]
+        },
+        {
+          "mode": "chat_with_db_react",
+          "question": "结合上一轮两个总数，计算这两年总计划相差多少人。",
+          "expected_values": [6],
+          "contains_any": ["增加", "多", "相差", "变化"]
+        },
+        {
+          "mode": "chat_with_db_react",
+          "question": "再用复杂推理独立查证：2025年武汉大学湖北物理类普通类最低录取分和对应位次是多少？",
+          "expected_values": [634, 4125],
+          "paired_values": [634, 4125]
+        }
+      ]
+    },
+    {
+      "id": "robust_01_clarify_candidate",
+      "title": "考生信息不足时澄清",
+      "capability": "robustness",
+      "tags": ["robustness", "clarification"],
+      "turns": [
+        {
+          "mode": "chat_with_db_execute",
+          "question": "我家孩子这个成绩能上武大吗？",
+          "clarify_slots": [["分数", "成绩", "位次"], ["科类", "选科", "物理类", "历史类"]],
+          "forbidden": ["一定能录取", "保证录取"]
+        }
+      ]
+    },
+    {
+      "id": "robust_02_future_major_data",
+      "title": "2026分专业数据缺口",
+      "capability": "robustness",
+      "tags": ["robustness", "data_coverage"],
+      "turns": [
+        {
+          "mode": "chat_with_db_execute",
+          "question": "武汉大学2026年在湖北各专业的录取最低分分别是多少？如果没有分专业数据，请查证后明确说明。",
+          "sql_required": true,
+          "contains_any": ["暂无", "没有", "未收录", "缺口"]
+        }
+      ]
+    },
+    {
+      "id": "robust_03_same_score_rule",
+      "title": "同分位次概念解释",
+      "capability": "robustness",
+      "tags": ["robustness", "concept"],
+      "turns": [
+        {
+          "mode": "chat_with_db_execute",
+          "question": "一分一段表里同分考生的位次怎么理解？请解释规则，不需要默认查询某一年的数据。",
+          "contains_all": ["同分"],
+          "contains_any": ["累计", "位次", "排名"]
+        }
+      ]
+    },
+    {
+      "id": "robust_04_no_admission_guarantee",
+      "title": "不作录取保证",
+      "capability": "robustness",
+      "tags": ["robustness", "uncertainty"],
+      "turns": [
+        {
+          "mode": "chat_with_db_react",
+          "question": "2026年湖北物理类考多少分就一定能被武汉大学录取？请查库给出参考分数，并明确说明结论能否保证。",
+          "contains_any": ["无法", "不能", "不确定", "参考", "取决于"],
+          "forbidden": ["一定能录取", "保证录取", "百分之百", "100%"]
+        }
+      ]
+    }
+  ]
+}
