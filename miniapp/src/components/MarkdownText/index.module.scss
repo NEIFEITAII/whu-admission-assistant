@@ -147,3 +147,9 @@
     border-right: none;
   }
 }
+
+.sourceLink {
+  color: $color-primary;
+  text-decoration: underline;
+  cursor: pointer;
+}

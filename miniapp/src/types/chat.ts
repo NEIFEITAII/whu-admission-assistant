@@ -10,7 +10,7 @@ export interface ChatMessage {
 }
 
 export interface ChatSession {
-  /** 会话主标识（首个底层会话的 conv_uid），历史列表按此去重 */
+  /** 本地会话主标识，历史列表按此去重 */
   convUid: string;
   title: string;
   /** 最近一次回答所用的引擎 */

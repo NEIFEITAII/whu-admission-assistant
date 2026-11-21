@@ -41,6 +41,10 @@ const TOPIC_PATTERNS: RegExp[] = [
 export function isDataQuestion(text: string): boolean {
   const t = text.trim();
   if (!t) return false;
+  if (/研究生|硕士|博士|学院简介|学院概况/.test(t)) return false;
+  if (/强基计划|保送生|高校专项/.test(t)
+      && /专业|条件|流程|简章|考核/.test(t)
+      && !/录取分|分数线|投档线|位次|人数|招生计划/.test(t)) return false;
   if (STRONG_DATA_PATTERNS.some((re) => re.test(t))) return true;
   if (TOPIC_PATTERNS.some((re) => re.test(t))) return false;
   if (POLICY_PATTERNS.some((re) => re.test(t))) return false;
@@ -78,6 +82,9 @@ export function decideMode(text: string, fallback: ChatMode = 'chat_knowledge'):
   const t = text.trim();
   if (isDataQuestion(t)) {
     return isComplexDataQuestion(t) ? 'chat_with_db_react' : 'chat_with_db_execute';
+  }
+  if (/研究生|硕士|博士|学院简介|学院概况|强基计划|保送生|高校专项/.test(t)) {
+    return 'chat_knowledge';
   }
   if (POLICY_PATTERNS.some((re) => re.test(t))) return 'chat_knowledge';
   return fallback;

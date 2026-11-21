@@ -2,6 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { decideMode, isComplexDataQuestion, isDataQuestion } from '@/utils/routeMode';
 
 describe('routeMode', () => {
+  it('政策专业清单和研究生问题使用文档检索，湖北录取数值继续查库', () => {
+    expect(decideMode('2026年强基计划有哪些招生专业？')).toBe('chat_knowledge');
+    expect(decideMode('博士专业目录', 'chat_with_db_execute')).toBe('chat_knowledge');
+    expect(decideMode('计算机学院简介', 'chat_with_db_execute')).toBe('chat_knowledge');
+    expect(decideMode('强基计划录取分数线')).toBe('chat_with_db_execute');
+    expect(decideMode('2025年湖北招生计划总数')).toBe('chat_with_db_execute');
+  });
   it('将政策规则问题路由到知识库', () => {
     expect(decideMode('武汉大学报考条件是什么？')).toBe('chat_knowledge');
     expect(isDataQuestion('录取流程和材料要求有哪些？')).toBe(false);

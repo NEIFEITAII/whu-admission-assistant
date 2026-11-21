@@ -3,12 +3,13 @@ import { ChatMode } from '@/types/chat';
 import { sanitizeAnswer } from '@/utils/answerFormat';
 import { streamDemoAnswer } from '@/services/demo';
 
-const DEFAULT_BASE = 'http://127.0.0.1:5670';
-const MODEL_NAME = 'deepseek-chat';
+const DEFAULT_BASE = 'http://127.0.0.1:15670';
+const MODEL_NAME = 'qwen3.8-flash-next';
 
 export function getBaseUrl(): string {
   try {
     const v = Taro.getStorageSync('whu_base_url');
+    if (v === 'http://127.0.0.1:5670' || v === 'http://localhost:5670') return DEFAULT_BASE;
     if (v) return v;
   } catch {}
   return DEFAULT_BASE;
@@ -52,11 +53,12 @@ export const MODE_CONFIG: Record<
   },
 };
 
-export async function createConversation(mode: ChatMode): Promise<string> {
+export async function createConversation(mode: ChatMode): Promise<string | null> {
   // react 模式复用 chat_with_db_execute 的底层会话类型（后端无独立 react 会话场景）
   const backendMode = mode === 'chat_with_db_react' ? 'chat_with_db_execute' : mode;
   const url = `${getBaseUrl()}/api/v1/chat/dialogue/new?chat_mode=${backendMode}`;
-  const res = await Taro.request({ url, method: 'POST', timeout: 15000 });
+  const res = await Taro.request({ url, method: 'POST', timeout: 15000 }).catch(() => null);
+  if (!res) return null;
   const data = res.data as any;
   if (data?.success && data.data?.conv_uid) return data.data.conv_uid;
   throw new Error(data?.err_msg || '创建会话失败');
@@ -181,11 +183,8 @@ function streamChatCompletionsReal(
     callbacks.onDone();
   };
 
-  // 静默超时兜底：实测两种模式的 SSE 都可能没有 [DONE] 结束帧或连接关闭回调不可靠。
-  // 首帧等待 35s（知识库检索+首token），流中静默 8s（增量）/2.5s（非增量快照）即收尾；
-  // 收尾后后续帧仍会继续处理（finalize 不设 finished），数据不会丢
-  // ReAct 智能体多步推理，步骤间 LLM 思考间隔可能较长，静默阈值放宽到 15s
-  const SILENCE_MS = isReact ? 15000 : incremental ? 8000 : 2500;
+  // 知识库检索和模型首帧可能较慢。ReAct 的工具步骤之间也可能等待较久。
+  const SILENCE_MS = isReact ? 120000 : incremental ? 8000 : 2500;
 
   const armSilenceTimer = (timeoutMs: number = SILENCE_MS) => {
     if (finished || cancelled || doneFired) return;
@@ -262,6 +261,7 @@ function streamChatCompletionsReal(
       try {
         const json = JSON.parse(payload);
         const t = json?.type;
+        armSilenceTimer();
         if (t === 'done') {
           finished = true;
           clearSilenceTimer();
@@ -292,8 +292,7 @@ function streamChatCompletionsReal(
 
   const parseChunk = isReact ? parseReactSseChunk : parseSseChunk;
 
-  // 首帧守卫：请求发出后 35s 无任何数据帧（后端 hang/断流）也自动收尾
-  armSilenceTimer(35000);
+  armSilenceTimer(isReact ? SILENCE_MS : 90000);
 
   if (process.env.TARO_ENV === 'h5') {
     // 使用 XHR 增量读取 SSE：云预览等嵌入式环境中 fetch 流式请求可能被
@@ -480,9 +479,14 @@ const isNetworkError = (err: Error): boolean =>
  * 一旦拿到任意真实内容就不再降级，避免掩盖服务端问题。
  */
 export function streamChatCompletions(
-  params: { mode: ChatMode; convUid: string; userInput: string },
+  params: { mode: ChatMode; convUid: string | null; userInput: string },
   callbacks: StreamCallbacks,
 ): () => void {
+  const { mode, convUid, userInput } = params;
+  if (convUid === null) {
+    return streamDemoAnswer(userInput, mode, callbacks.onDelta, callbacks.onDone);
+  }
+
   let sawContent = false;
   let demoStarted = false;
   let finished = false;
@@ -500,8 +504,8 @@ export function streamChatCompletions(
     demoStarted = true;
     if (abortReal) abortReal();
     cancelDemo = streamDemoAnswer(
-      params.userInput,
-      params.mode,
+      userInput,
+      mode,
       (text, replace) => callbacks.onDelta(text, replace),
       finishOnce,
     );
@@ -531,7 +535,7 @@ export function streamChatCompletions(
     },
   };
 
-  abortReal = streamChatCompletionsReal(params, wrapped);
+  abortReal = streamChatCompletionsReal({ mode, convUid, userInput }, wrapped);
 
   return () => {
     if (cancelDemo) cancelDemo();

@@ -5,12 +5,17 @@ import { generateId, loadSessions, saveSessions } from '@/utils/storage';
 import { sanitizeAnswer } from '@/utils/answerFormat';
 import { decideMode } from '@/utils/routeMode';
 
-let _cancelRef: (() => void) | null = null;
-
 // 旧版本数据库场景名兼容
 const normalizeSession = (s: ChatSession): ChatSession => {
-  const mode = (s.mode as string) === 'chat_with_db_qa' ? 'chat_with_db_execute' : s.mode;
-  return { ...s, mode } as ChatSession;
+  if ((s.mode as string) !== 'chat_with_db_qa') return s;
+  return {
+    ...s,
+    mode: 'chat_with_db_execute',
+    convUids: {
+      ...s.convUids,
+      chat_with_db_execute: s.convUids?.chat_with_db_execute || s.convUids?.[s.mode] || s.convUid,
+    },
+  };
 };
 
 /** 取会话里最近一条用户/助手消息所用的引擎，作为追问的默认引擎 */
@@ -60,102 +65,94 @@ interface ChatState {
 }
 
 export const useChatStore = create<ChatState>((set, get) => {
-  /** 更新指定助手消息的内容 */
-  const setMsgContent = (msgId: string, content: string, error?: boolean) => {
-    const cur = get().current;
-    if (!cur) return;
-    const messages = cur.messages.map((m) =>
-      m.id === msgId ? { ...m, content, ...(error ? { error: true } : {}) } : m,
-    );
-    const s2 = { ...cur, messages, updatedAt: Date.now() };
+  let cancelAnswer: (() => void) | null = null;
+
+  const updateSession = (sessionUid: string, update: (session: ChatSession) => ChatSession) => {
+    const { current, sessions } = get();
+    const session = sessions.find((s) => s.convUid === sessionUid);
+    if (!session) return;
+    const updated = update(session);
     set({
-      current: s2,
-      sessions: get().sessions.map((s) => (s.convUid === s2.convUid ? s2 : s)),
+      current: current?.convUid === sessionUid ? updated : current,
+      sessions: sessions.map((s) => (s.convUid === sessionUid ? updated : s)),
     });
   };
 
-  /** 确保某个引擎有可用的底层会话，并把它记为当前引擎 */
-  const ensureConv = async (mode: ChatMode): Promise<string | null> => {
-    const cur = get().current;
-    if (!cur) return null;
-    const convUids: Partial<Record<ChatMode, string>> = { ...(cur.convUids || {}) };
-    if (cur.convUid && !convUids[cur.mode]) convUids[cur.mode] = cur.convUid;
+  const answer = async (input: string, sessionUid: string, msgId: string, startMode: ChatMode) => {
+    let cancelled = false;
+    let stopStream: (() => void) | undefined;
+    cancelAnswer = () => {
+      cancelled = true;
+      stopStream?.();
+    };
 
-    let convUid = convUids[mode];
-    if (!convUid) {
-      try {
-        convUid = await createConversation(mode);
-      } catch (e) {
-        console.error('[ChatStore] create conversation error', e);
-        return null;
-      }
-      convUids[mode] = convUid;
-    }
+    const setMsgContent = (content: string, error = false) => {
+      updateSession(sessionUid, (session) => ({
+        ...session,
+        updatedAt: Date.now(),
+        messages: session.messages.map((message) =>
+          message.id === msgId ? { ...message, content, error } : message,
+        ),
+      }));
+    };
 
-    const latest = get().current;
-    if (latest) {
-      const s2 = { ...latest, mode, convUids };
-      set({
-        current: s2,
-        sessions: get().sessions.map((s) => (s.convUid === s2.convUid ? s2 : s)),
-      });
-    }
-    return convUid;
-  };
-
-  /**
-   * 单条问题的完整作答流程：
-   * 先用分到的引擎答；若回答表明"没覆盖到"，自动换另一个引擎重试一次；
-   * 两次都不行则给出可操作的引导文案，而不是把失败原文抛给用户。
-   */
-  const answer = async (input: string, msgId: string, startMode: ChatMode) => {
     let mode = startMode;
-    let lastText = '';
+    try {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const session = get().sessions.find((s) => s.convUid === sessionUid);
+        if (!session) return;
+        const convUid = session.convUids?.[mode] ?? (await createConversation(mode));
+        if (cancelled) return;
+        if (convUid) {
+          updateSession(sessionUid, (latest) => ({
+            ...latest,
+            mode,
+            convUids: { ...latest.convUids, [mode]: convUid },
+          }));
+        }
 
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const convUid = await ensureConv(mode);
-      if (!convUid) {
-        setMsgContent(msgId, '无法连接问答服务，请确认后端已启动', true);
-        set({ streaming: false });
-        return;
-      }
-
-      const res = await new Promise<{ ok: boolean; text: string }>((resolve) => {
-        let acc = '';
-        _cancelRef = streamChatCompletions(
-          { mode, convUid, userInput: input },
-          {
-            onDelta: (delta, replace) => {
-              acc = replace ? delta : acc + delta;
-              setMsgContent(msgId, acc);
+        const reply = await new Promise<string>((resolve, reject) => {
+          let content = '';
+          const abort = streamChatCompletions(
+            { mode, convUid, userInput: input },
+            {
+              onDelta: (delta, replace) => {
+                if (cancelled) return;
+                content = replace ? delta : content + delta;
+                setMsgContent(content);
+              },
+              onDone: () => resolve(sanitizeAnswer(content)),
+              onError: reject,
             },
-            onDone: () => resolve({ ok: true, text: sanitizeAnswer(acc) }),
-            onError: (err) => resolve({ ok: false, text: `[错误] ${err.message}` }),
-          },
-        );
-      });
-      _cancelRef = null;
+          );
+          stopStream = () => {
+            abort();
+            resolve('');
+          };
+        });
+        stopStream = undefined;
+        if (cancelled) return;
 
-      if (!res.ok) {
-        setMsgContent(msgId, res.text, true);
-        set({ streaming: false });
-        return;
-      }
-
-      lastText = res.text;
-      const next = attempt === 0 && isInsufficient(lastText) ? fallbackMode(mode) : null;
-      if (next) {
-        // 知识库没覆盖到，换数据引擎再试一次（先清空气泡避免拼在一起）
+        const next = attempt === 0 && convUid && isInsufficient(reply) ? fallbackMode(mode) : null;
+        if (!next) {
+          setMsgContent(reply || GUIDE_TEXT);
+          return;
+        }
         mode = next;
-        setMsgContent(msgId, '');
-        continue;
+        setMsgContent('');
       }
-      break;
+    } catch (error) {
+      if (!cancelled) {
+        const message = error instanceof Error ? error.message : '问答服务暂时无法处理这条消息';
+        setMsgContent(`[错误] ${message}`, true);
+      }
+    } finally {
+      if (!cancelled) {
+        cancelAnswer = null;
+        set({ streaming: false });
+        saveSessions(get().sessions);
+      }
     }
-
-    setMsgContent(msgId, lastText || GUIDE_TEXT);
-    set({ streaming: false });
-    saveSessions(get().sessions);
   };
 
   return {
@@ -164,7 +161,7 @@ export const useChatStore = create<ChatState>((set, get) => {
     streaming: false,
 
     init: () => {
-      set({ sessions: loadSessions().map(normalizeSession) });
+      if (!get().streaming) set({ sessions: loadSessions().map(normalizeSession) });
     },
 
     newSession: () => {
@@ -190,11 +187,10 @@ export const useChatStore = create<ChatState>((set, get) => {
     },
 
     cancel: () => {
-      if (_cancelRef) {
-        _cancelRef();
-        _cancelRef = null;
-      }
+      cancelAnswer?.();
+      cancelAnswer = null;
       set({ streaming: false });
+      saveSessions(get().sessions);
     },
 
     sendMessage: async (text) => {
@@ -205,18 +201,9 @@ export const useChatStore = create<ChatState>((set, get) => {
       // 单入口智能分流：数字类走数据库，政策类走知识库，追问沿用上一轮
       const mode = decideMode(input, lastUsedMode(session));
 
-      // 先把本轮引擎的会话建好，保证会话主标识从一开始就有效
-      const convUids: Partial<Record<ChatMode, string>> = { ...(session?.convUids || {}) };
-      if (session?.convUid && !convUids[session.mode]) convUids[session.mode] = session.convUid;
-      if (!convUids[mode]) {
-        try {
-          convUids[mode] = await createConversation(mode);
-        } catch (e) {
-          console.error('[ChatStore] create conversation error', e);
-          return;
-        }
-      }
-      const primaryConvUid = session?.convUid || convUids[mode]!;
+      // 兼容早期将首个后端会话 ID 用作本地会话标识的历史记录。
+      const convUids = session?.convUids ?? (session ? { [session.mode]: session.convUid } : {});
+      const primaryConvUid = session?.convUid || generateId();
 
       const userMsg: ChatMessage = {
         id: generateId(),
@@ -255,7 +242,7 @@ export const useChatStore = create<ChatState>((set, get) => {
         streaming: true,
       });
 
-      await answer(input, assistantMsg.id, mode);
+      await answer(input, primaryConvUid, assistantMsg.id, mode);
     },
   };
 });

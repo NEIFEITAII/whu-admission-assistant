@@ -1,0 +1,38 @@
+[system]
+language = "zh"
+api_keys = []
+encrypt_key = "${env:WHU_DBGPT_ENCRYPT_KEY}"
+
+[service.web]
+host = "127.0.0.1"
+port = 15670
+cors_allowed_origins = "http://localhost:10086,http://127.0.0.1:10086"
+
+[service.web.database]
+type = "sqlite"
+path = "pilot/meta_data/whu-admission.db"
+
+[service.model.worker]
+host = "127.0.0.1"
+
+[rag.storage.vector]
+type = "chroma"
+persist_path = "pilot/whu-admission-vectors"
+
+[models]
+default_llm = "qwen3.8-flash-next"
+
+[[models.llms]]
+name = "qwen3.8-flash-next"
+provider = "proxy/openai"
+api_base = "${env:WHU_QWEN_API_BASE}"
+api_key = "${env:WHU_QWEN_API_KEY}"
+context_length = 32768
+verify_ssl = false
+
+
+[[models.embeddings]]
+name = "BAAI/bge-small-zh-v1.5"
+provider = "hf"
+path = "models/bge-small-zh-v1.5"
+device = "cpu"

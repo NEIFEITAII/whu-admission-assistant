@@ -14,7 +14,7 @@ vi.mock('@tarojs/taro', () => ({
   },
 }));
 
-import { streamChatCompletions } from '@/services/dbgpt';
+import { createConversation, streamChatCompletions } from '@/services/dbgpt';
 
 interface ChunkPayload {
   data: ArrayBuffer;
@@ -101,6 +101,28 @@ describe('streamChatCompletions', () => {
     Reflect.deleteProperty(process.env, 'TARO_ENV');
   });
 
+  it('会话请求断网时直接使用离线答案', async () => {
+    taroMocks.request.mockRejectedValue({ errMsg: 'request:fail' });
+    const convUid = await createConversation('chat_knowledge');
+    expect(convUid).toBeNull();
+
+    const cb = callbacks();
+    streamChatCompletions(
+      { mode: 'chat_knowledge', convUid, userInput: '转专业政策' },
+      cb,
+    );
+    await vi.runAllTimersAsync();
+    expect(taroMocks.request).toHaveBeenCalledTimes(1);
+    expect(cb.onDelta.mock.calls.at(-1)?.[0]).toContain('离线演示数据');
+    expect(cb.onDone).toHaveBeenCalledTimes(1);
+    expect(cb.onError).not.toHaveBeenCalled();
+  });
+
+  it('服务端拒绝创建会话时保留错误信息', async () => {
+    taroMocks.request.mockResolvedValue({ data: { success: false, err_msg: '会话未授权' } });
+    await expect(createConversation('chat_knowledge')).rejects.toThrow('会话未授权');
+  });
+
   it('知识库按增量帧输出，无 [DONE] 时静默超时收尾', async () => {
     const request = createRequestTask();
     taroMocks.request.mockReturnValue(request.task);
@@ -112,7 +134,7 @@ describe('streamChatCompletions', () => {
     );
 
     expect(taroMocks.request.mock.calls[0][0]).toMatchObject({
-      url: 'http://127.0.0.1:5670/api/v1/chat/completions',
+      url: 'http://127.0.0.1:15670/api/v1/chat/completions',
       method: 'POST',
       enableChunked: true,
       data: { chat_mode: 'chat_knowledge', incremental: true },

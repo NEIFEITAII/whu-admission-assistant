@@ -38,6 +38,10 @@ tests/
 
 ## 快速开始
 
+当前整合版本使用 Qwen、GraphRAG 政策检索和 PostgreSQL 数字查询。
+配套后端代码及本机配置方法见 [后端部署源码](backend-deployment/README.md)。
+当前前端默认后端地址为 http://127.0.0.1:15670。
+
 ### 方式一：离线演示（无需任何后端）
 
 ```bash
@@ -60,7 +64,7 @@ npm run build:weapp
 
 ### 方式二：连接真实后端
 
-前端默认请求 `http://127.0.0.1:5670`，可在"我的"页面修改服务地址。后端由三部分组成：
+前端默认请求 `http://127.0.0.1:15670`，可在"我的"页面修改服务地址。后端由三部分组成：
 
 1. PostgreSQL 招生数据库（分数位次、招生计划、专业录取明细等表）；
 2. MCP 只读 SQL 服务，向模型暴露表结构与查询能力；
@@ -84,10 +88,10 @@ npm run test:run
 python tests/business/run_business_tests.py --validate-only
 
 # 冒烟（8 个核心场景）
-python tests/business/run_business_tests.py --suite smoke --base-url http://127.0.0.1:5670
+python tests/business/run_business_tests.py --suite smoke --base-url http://127.0.0.1:15670
 
 # 全量 24 场景 / 29 轮
-python tests/business/run_business_tests.py --suite full --base-url http://127.0.0.1:5670
+python tests/business/run_business_tests.py --suite full --base-url http://127.0.0.1:15670
 ```
 
 每次运行在 `tests/business/results/<时间戳>/` 下生成 `records.jsonl`（逐轮原始记录）、`summary.json`、`report.md`。最近一次全量结果：24 场景全部通过，平均 9.03 秒。
@@ -103,5 +107,5 @@ python tests/business/run_business_tests.py --suite full --base-url http://127.0
 
 ## 说明
 
-- 仓库不含后端源码、数据库导出与任何密钥；涉及 API Key、数据库口令的配置均在部署环境本地维护。
+- 后端部署源码与公开 SQL 种子数据位于 backend-deployment；DB-GPT 和 GraphRAG 代码位于该目录说明中列出的配套仓库。API Key 与数据库口令通过本机配置提供。
 - 内置的招生数据来源于公开招生信息，仅用于功能演示，不作为报考依据。

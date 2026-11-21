@@ -28,7 +28,7 @@ import { useChatStore } from '@/store/chatStore';
 
 interface StreamParams {
   mode: ChatMode;
-  convUid: string;
+  convUid: string | null;
   userInput: string;
 }
 
@@ -52,6 +52,38 @@ describe('chatStore 引擎会话与兜底', () => {
       .mockImplementation((mode: ChatMode) => Promise.resolve(`${mode}-uid`));
     serviceMocks.streamChatCompletions.mockReset();
     mockStreamAnswer((mode) => `${mode}：内容充足的正常回答`);
+  });
+
+  it('立即显示问题，连不上后端时用离线回答，恢复后可在同一会话查询', async () => {
+    serviceMocks.createConversation.mockResolvedValueOnce(null);
+    const input = '新生入学后转专业政策是怎样的？';
+    const send = useChatStore.getState().sendMessage(input);
+    expect(useChatStore.getState().streaming).toBe(true);
+    expect(useChatStore.getState().current?.messages[0].content).toBe(input);
+    const sessionUid = useChatStore.getState().current?.convUid;
+    await send;
+    expect(serviceMocks.streamChatCompletions.mock.calls[0][0].convUid).toBeNull();
+    expect(useChatStore.getState().current?.convUids).toEqual({});
+    expect(useChatStore.getState().streaming).toBe(false);
+    expect(taroMocks.setStorageSync).toHaveBeenCalled();
+
+    await useChatStore.getState().sendMessage(input);
+    expect(serviceMocks.streamChatCompletions.mock.calls[1][0].convUid).toBe('chat_knowledge-uid');
+    expect(useChatStore.getState().current?.convUid).toBe(sessionUid);
+  });
+
+  it('停止后忽略旧的会话创建结果，允许继续提问', async () => {
+    let resolveConversation!: (uid: string) => void;
+    serviceMocks.createConversation.mockReturnValueOnce(new Promise<string>((resolve) => {
+      resolveConversation = resolve;
+    }));
+    const cancelled = useChatStore.getState().sendMessage('国家专项报考条件');
+    useChatStore.getState().cancel();
+    await useChatStore.getState().sendMessage('转专业政策');
+    resolveConversation('cancelled-uid');
+    await cancelled;
+    expect(serviceMocks.streamChatCompletions).toHaveBeenCalledTimes(1);
+    expect(useChatStore.getState().current?.convUids?.chat_knowledge).toBe('chat_knowledge-uid');
   });
 
   it('为每个引擎独立创建并复用 convUid', async () => {

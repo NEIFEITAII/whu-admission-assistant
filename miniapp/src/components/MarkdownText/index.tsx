@@ -1,4 +1,5 @@
 import { View, Text, ScrollView } from '@tarojs/components';
+import Taro from '@tarojs/taro';
 import { useMemo } from 'react';
 import MiniChart from '@/components/MiniChart';
 import type { ChartSpec } from '@/utils/answerFormat';
@@ -157,10 +158,10 @@ function parseBlocks(content: string): Block[] {
 
 // 行内格式：**粗体**、`行内代码`
 function renderInline(text: string, keyPrefix: string) {
-  const parts: Array<{ text: string; bold?: boolean; code?: boolean }> = [];
+  const parts: Array<{ text: string; bold?: boolean; code?: boolean; url?: string }> = [];
   let rest = text;
   let idx = 0;
-  const regex = /(\*\*([^*]+)\*\*)|(`([^`]+)`)/g;
+  const regex = /(\*\*([^*]+)\*\*)|(`([^`]+)`)|\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
   let lastIndex = 0;
   let m: RegExpExecArray | null;
   while ((m = regex.exec(text)) !== null) {
@@ -169,6 +170,7 @@ function renderInline(text: string, keyPrefix: string) {
     }
     if (m[2] !== undefined) parts.push({ text: m[2], bold: true });
     else if (m[4] !== undefined) parts.push({ text: m[4], code: true });
+    else if (m[6]) parts.push({ text: m[5], url: m[6] });
     lastIndex = m.index + m[0].length;
     idx++;
   }
@@ -178,7 +180,14 @@ function renderInline(text: string, keyPrefix: string) {
   return parts.map((p, i) => (
     <Text
       key={`${keyPrefix}-${i}`}
-      className={`${styles.inline} ${p.bold ? styles.bold : ''} ${p.code ? styles.inlineCode : ''}`}
+      className={`${styles.inline} ${p.bold ? styles.bold : ''} ${p.code ? styles.inlineCode : ''} ${p.url ? styles.sourceLink : ''}`}
+      onClick={p.url ? () => {
+        if (process.env.TARO_ENV === 'h5') {
+          window.open(p.url, '_blank', 'noopener,noreferrer');
+        } else {
+          Taro.setClipboardData({ data: p.url! });
+        }
+      } : undefined}
     >
       {p.text}
     </Text>

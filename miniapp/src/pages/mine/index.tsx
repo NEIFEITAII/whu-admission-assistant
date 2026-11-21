@@ -28,8 +28,8 @@ export default function MinePage() {
   };
 
   const handleResetUrl = () => {
-    setBaseUrlState('http://127.0.0.1:5670');
-    setBaseUrl('http://127.0.0.1:5670');
+    setBaseUrlState('http://127.0.0.1:15670');
+    setBaseUrl('http://127.0.0.1:15670');
     Taro.showToast({ title: '已重置为默认', icon: 'success' });
   };
 
@@ -66,7 +66,7 @@ export default function MinePage() {
               className={styles.fieldInput}
               value={baseUrl}
               onInput={(e) => setBaseUrlState(e.detail.value)}
-              placeholder="http://127.0.0.1:5670"
+              placeholder="http://127.0.0.1:15670"
               placeholderClass={styles.placeholder}
             />
           </View>
