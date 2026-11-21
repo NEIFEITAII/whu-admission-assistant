@@ -1,13 +1,10 @@
 $ErrorActionPreference = 'Stop'
 $packageRoot = Split-Path -Parent $PSScriptRoot
 $workspace = Split-Path -Parent $packageRoot
-if (Test-Path (Join-Path $workspace 'miniapp/package.json')) {
-    $workspace = Split-Path -Parent $workspace
-}
-$dbgptRoot = Join-Path $workspace 'DB-GPT'
+$dbgptRoot = Join-Path $workspace 'vendor/DB-GPT'
 $runtime = Join-Path $packageRoot '.runtime'
 $pgData = Join-Path $runtime 'postgres'
-$pgCtl = (Get-Command pg_ctl.exe -ErrorAction Stop).Source
+$python = Join-Path $dbgptRoot '.venv/Scripts/python.exe'
 
 function Import-LocalEnvironment([string]$Path) {
     foreach ($line in [IO.File]::ReadLines($Path)) {
@@ -51,20 +48,24 @@ function Start-LocalServer(
     throw "$Name 启动超时。日志 $errorLog"
 }
 
-& $pgCtl status -D $pgData | Out-Null
-if ($LASTEXITCODE -ne 0) {
-    & $pgCtl start -D $pgData -l (Join-Path $runtime 'postgres.log') -w
-    if ($LASTEXITCODE -ne 0) { throw '招生数据库启动失败。' }
+if (Test-Path (Join-Path $pgData 'PG_VERSION')) {
+    $pgCtl = (Get-Command pg_ctl.exe -ErrorAction Stop).Source
+    & $pgCtl status -D $pgData | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        & $pgCtl start -D $pgData -l (Join-Path $runtime 'postgres.log') -w
+        if ($LASTEXITCODE -ne 0) { throw '招生数据库启动失败。' }
+    }
 }
 
 $env:PYTHONUTF8 = '1'
 Import-LocalEnvironment (Join-Path $runtime 'db-mcp.env')
-Start-LocalServer -Name 'mcp' -Executable (Join-Path $runtime 'mcp-venv/Scripts/python.exe') `
+Start-LocalServer -Name 'mcp' -Executable $python `
     -ServerArgs @('mcp/db_mcp_server.py') -Directory $packageRoot -Port 8765
 
 Import-LocalEnvironment (Join-Path $runtime 'qwen.env')
 $env:ENCRYPT_KEY = $env:WHU_DBGPT_ENCRYPT_KEY
-$graphRoot = Join-Path $workspace 'whu-admissions-graphrag'
+$env:DBGPT_HOME = Join-Path $runtime 'dbgpt-home'
+$graphRoot = Join-Path $workspace 'graphrag'
 $env:WHU_DATA = Join-Path $graphRoot 'data'
 $env:WHU_EMBED_MODEL = Join-Path $dbgptRoot 'models/bge-small-zh-v1.5'
 $env:WHU_LLM = $env:WHU_QWEN_API_BASE.TrimEnd('/') + '/chat/completions'
@@ -73,7 +74,7 @@ $env:WHU_LLM_VERIFY_SSL = 'false'
 $env:WHU_LLM_API_KEY = $env:WHU_QWEN_API_KEY
 $env:WHU_HOST = '127.0.0.1'
 $env:WHU_GRAPH_RETRIEVE_URL = 'http://127.0.0.1:8090/api/retrieve'
-Start-LocalServer -Name 'graphrag' -Executable (Join-Path $dbgptRoot '.venv/Scripts/python.exe') `
+Start-LocalServer -Name 'graphrag' -Executable $python `
     -ServerArgs @('app/app.py') -Directory $graphRoot -Port 8090
 if ((Invoke-RestMethod -Uri 'http://127.0.0.1:8090/api/stats' -TimeoutSec 10).chunks -le 0) {
     throw 'GraphRAG 索引尚未建立。'
@@ -98,5 +99,8 @@ while (-not $embeddingReady -and (Get-Date) -lt $deadline) {
     }
 }
 if (-not $embeddingReady) { throw '政策检索模型尚未就绪。' }
+
+& $python (Join-Path $PSScriptRoot 'configure_dbgpt.py')
+if ($LASTEXITCODE -ne 0) { throw '招生数据源配置失败。' }
 
 Write-Output '后端地址 http://127.0.0.1:15670'

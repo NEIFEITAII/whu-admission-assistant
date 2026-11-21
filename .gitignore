@@ -30,3 +30,6 @@ venv/
 # 测试运行产物
 tests/business/results/
 *.log
+
+# Local DB-GPT and GraphRAG state
+/vendor/DB-GPT/pilot/whu-admission-vectors/

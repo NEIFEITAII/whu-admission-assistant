@@ -28,6 +28,9 @@ miniapp/                    小程序源码（Taro 项目）
     utils/answerFormat.ts   答案清洗与表格/图表格式化
     store/chatStore.ts      会话与消息状态
     **/__tests__/           前端单元测试（Vitest）
+backend-deployment/         PostgreSQL 种子数据、MCP 服务、配置和启动脚本
+graphrag/                   政策文档导入、检索与出处生成
+vendor/DB-GPT/              DB-GPT 源码与招生问答定制
 docs/
   whu_admission_system_design.md/.docx    系统总体设计与详细设计
   assets/architecture.png                  系统架构图
@@ -38,39 +41,22 @@ tests/
 
 ## 快速开始
 
-当前整合版本使用 Qwen、GraphRAG 政策检索和 PostgreSQL 数字查询。
-配套后端代码及本机配置方法见 [后端部署源码](backend-deployment/README.md)。
-当前前端默认后端地址为 http://127.0.0.1:15670。
+克隆一次即可获得前端、GraphRAG、DB-GPT 和后端部署源码。
 
-### 方式一：离线演示（无需任何后端）
-
-```bash
+```powershell
+git clone https://github.com/NorthSeven877/whu-admission-assistant.git
+cd whu-admission-assistant
 cd miniapp
-npm install
-npm run build:h5
-npx serve dist-h5       # 或任意静态服务器
+npm.cmd ci --legacy-peer-deps
+npm.cmd run dev:h5
 ```
 
-打开页面即可对话。未连接问答服务时，前端会自动切换到**离线演示模式**，用内置样例逐字输出，覆盖政策问答、分数位次、招生计划、快报四类问题；样例答案末尾会标注"离线演示数据"，不会与真实查询结果混淆。
+浏览器打开 http://localhost:10086。前端连接不上后端时使用内置离线样例。
+微信小程序可在 miniapp 目录执行 npm.cmd run build:weapp，再用微信开发者工具导入该目录。
 
-微信小程序端：
-
-```bash
-cd miniapp
-npm run build:weapp
-```
-
-用微信开发者工具打开 `miniapp/` 目录，`miniprogramRoot` 已指向 `dist/`。首次导入时请把 `project.config.json` 中的 `appid` 换成你自己的小程序 AppID（或使用测试号），否则无法预览。
-
-### 方式二：连接真实后端
-
-前端默认请求 `http://127.0.0.1:15670`，可在"我的"页面修改服务地址。后端由三部分组成：
-
-1. PostgreSQL 招生数据库（分数位次、招生计划、专业录取明细等表）；
-2. MCP 只读 SQL 服务，向模型暴露表结构与查询能力；
-3. DB-GPT 问答服务，提供知识库问答、SQL 问答与多步推理三类接口。
-
-三者启动后，前端会自动改用真实数据，离线样例不再触发。
+完整问答使用 Qwen、GraphRAG 政策检索和 PostgreSQL 数字查询。
+按 [后端启动说明](backend-deployment/README.md) 准备索引和本机配置后，
+前端默认连接 http://127.0.0.1:15670。
 
 ## 测试
 
@@ -107,5 +93,5 @@ python tests/business/run_business_tests.py --suite full --base-url http://127.0
 
 ## 说明
 
-- 后端部署源码与公开 SQL 种子数据位于 backend-deployment；DB-GPT 和 GraphRAG 代码位于该目录说明中列出的配套仓库。API Key 与数据库口令通过本机配置提供。
+- 后端部署源码与公开 SQL 种子数据位于 backend-deployment。API Key 与数据库口令通过本机配置提供。
 - 内置的招生数据来源于公开招生信息，仅用于功能演示，不作为报考依据。
