@@ -153,3 +153,11 @@
   text-decoration: underline;
   cursor: pointer;
 }
+
+
+.markdown { font-size: 14PX; line-height: 1.9; overflow-wrap: anywhere; }
+.paragraph { margin: 10PX 0; }
+.heading.h1 { font-size: 21PX; } .heading.h2 { font-size: 19PX; } .heading.h3 { font-size: 16PX; }
+.tableCell { min-width: 100PX; padding: 9PX 13PX; font-size: 12PX; line-height: 1.7; }
+.tableHeader { background: #47734d; }
+

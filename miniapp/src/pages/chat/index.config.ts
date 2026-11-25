@@ -1,3 +1,2 @@
-export default definePageConfig({
-  navigationBarTitleText: '武大招生咨询',
-});
+export default definePageConfig({ navigationBarTitleText: '武大招生咨询', navigationStyle: 'custom' });
+

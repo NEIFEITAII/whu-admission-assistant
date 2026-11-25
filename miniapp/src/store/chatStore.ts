@@ -116,6 +116,8 @@ export const useChatStore = create<ChatState>((set, get) => {
           const abort = streamChatCompletions(
             { mode, convUid, userInput: input },
             {
+              onMeta: (meta) => updateSession(sessionUid, (session) => ({ ...session, messages: session.messages.map((m) => m.id === msgId ? { ...m, ...meta } : m) })),
+              onStatus: (status) => updateSession(sessionUid, (session) => ({ ...session, messages: session.messages.map((m) => m.id === msgId ? { ...m, status } : m) })),
               onDelta: (delta, replace) => {
                 if (cancelled) return;
                 content = replace ? delta : content + delta;
@@ -246,3 +248,5 @@ export const useChatStore = create<ChatState>((set, get) => {
     },
   };
 });
+
+

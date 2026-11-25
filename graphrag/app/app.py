@@ -92,17 +92,18 @@ def load_resources():
         embeddings = np.load(npy)
         if embeddings.shape[0] != len(chunks):
             raise ValueError("Vector index and chunks differ; rebuild the GraphRAG index.")
-        try:
-            import torch
-            from transformers import AutoModel, AutoTokenizer
-            os.environ.setdefault("HF_ENDPOINT", "https://hf-mirror.com")
-            emb_tokenizer = AutoTokenizer.from_pretrained(EMBED_MODEL)
-            emb_model = AutoModel.from_pretrained(EMBED_MODEL)
-            emb_model.eval()
-        except Exception as e:
-            print("warn: embedding model unavailable: %s" % e, file=sys.stderr)
-            emb_tokenizer = emb_model = None
-
+        if os.environ.get("WHU_EMBED_PROVIDER") != "ollama":
+            try:
+                import torch
+                from transformers import AutoModel, AutoTokenizer
+                os.environ.setdefault("HF_ENDPOINT", "https://hf-mirror.com")
+                emb_tokenizer = AutoTokenizer.from_pretrained(EMBED_MODEL)
+                emb_model = AutoModel.from_pretrained(EMBED_MODEL)
+                emb_model.eval()
+            except Exception as e:
+                print("warn: embedding model unavailable: %s" % e, file=sys.stderr)
+                emb_tokenizer = emb_model = None
+    
     print("loaded %d chunks / %d docs, bm25=%s, vectors=%s" % (
         len(chunks), len(doc_meta), bm25 is not None,
         None if embeddings is None else embeddings.shape), file=sys.stderr)
@@ -120,7 +121,22 @@ def tokenize(text):
 
 
 def embed_query(q):
-    if embeddings is None or emb_model is None:
+    if embeddings is None:
+        return None
+    if os.environ.get("WHU_EMBED_PROVIDER") == "ollama":
+        base_url = os.environ.get("WHU_OLLAMA_BASE_URL", "http://127.0.0.1:11434")
+        model = os.environ.get("WHU_OLLAMA_EMBED_MODEL", "bge-m3:latest")
+        response = requests.post(
+            base_url.rstrip("/") + "/api/embed",
+            json={"model": model, "input": q},
+            timeout=45,
+        )
+        response.raise_for_status()
+        vector = np.asarray(response.json()["embeddings"][0], dtype=np.float32)
+        if vector.ndim != 1 or len(vector) != embeddings.shape[1]:
+            raise ValueError("Query/document vector dimensions differ; use the index's embedding model.")
+        return vector / max(float(np.linalg.norm(vector)), 1e-12)
+    if emb_model is None:
         return None
     import torch
     with torch.no_grad():
@@ -426,3 +442,4 @@ if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host=os.environ.get("WHU_HOST", "127.0.0.1"),
                 port=int(os.environ.get("WHU_PORT", "8090")), log_level="info")
+

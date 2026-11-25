@@ -1,5 +1,7 @@
 export type ChatMode = 'chat_knowledge' | 'chat_with_db_execute' | 'chat_with_db_react';
 
+export interface AnswerSource { title: string; url?: string; date?: string; text?: string; kind?: string; }
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant' | 'system';
@@ -7,6 +9,9 @@ export interface ChatMessage {
   mode: ChatMode;
   timestamp: number;
   error?: boolean;
+  sources?: AnswerSource[];
+  seconds?: number;
+  status?: string;
 }
 
 export interface ChatSession {
@@ -24,3 +29,5 @@ export interface ChatSession {
   createdAt: number;
   updatedAt: number;
 }
+
+

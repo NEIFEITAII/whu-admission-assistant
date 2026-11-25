@@ -1,3 +1,4 @@
+import Taro from '@tarojs/taro';
 import { View, Text } from '@tarojs/components';
 import classnames from 'classnames';
 import { ChatMessage } from '@/types/chat';
@@ -8,9 +9,10 @@ import styles from './index.module.scss';
 interface Props {
   message: ChatMessage;
   streaming?: boolean;
+  onSourcesClick?: (message: ChatMessage) => void;
 }
 
-export default function MessageBubble({ message, streaming }: Props) {
+export default function MessageBubble({ message, streaming, onSourcesClick }: Props) {
   // 系统提示：居中浅色小胶囊（模式切换等）
   if (message.role === 'system') {
     return (
@@ -32,7 +34,7 @@ export default function MessageBubble({ message, streaming }: Props) {
     >
       {!isUser && (
         <View className={styles.avatarSlot}>
-          <BrandMark size={64} />
+          <BrandMark size={32} />
         </View>
       )}
 
@@ -56,7 +58,7 @@ export default function MessageBubble({ message, streaming }: Props) {
                   <View className={styles.dot} />
                   <View className={styles.dot} />
                   <Text className={styles.typingHint}>
-                    {isDb ? '正在查询数据库…' : '正在检索知识库…'}
+                    {message.status || (isDb ? '正在查询数据库…' : '正在检索知识库…')}
                   </Text>
                 </View>
               ) : null}
@@ -66,6 +68,11 @@ export default function MessageBubble({ message, streaming }: Props) {
             </View>
           )}
         </View>
+        {!isUser && !!message.content && !streaming && <View className={styles.answerActions}>
+          <Text onClick={() => Taro.setClipboardData({ data: message.content })}>复制回答</Text>
+          {!!message.sources?.length && <Text onClick={() => onSourcesClick?.(message)}>查看 {message.sources.length} 条依据 ↗</Text>}
+          {typeof message.seconds === 'number' && <Text>{message.seconds} 秒</Text>}
+        </View>}
       </View>
 
       {isUser && (
@@ -76,3 +83,4 @@ export default function MessageBubble({ message, streaming }: Props) {
     </View>
   );
 }
+

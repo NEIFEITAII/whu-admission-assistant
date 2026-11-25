@@ -179,3 +179,25 @@
     opacity: 0;
   }
 }
+
+// Responsive reading width for the unified chat layout.
+.messageRow { margin-bottom: 30PX; padding: 0; gap: 12PX; }
+.avatarSlot { margin-right: 0; flex-shrink: 0; width: 32PX; }
+.bubbleWrap { flex: 1; min-width: 0; max-width: calc(100% - 44PX); }
+.bubble { max-width: 100%; padding: 0; font-size: 14PX; line-height: 1.9; box-sizing: border-box; }
+.assistantBubble { background: transparent; border: 0; box-shadow: none; }
+.userRow .bubbleWrap { flex: 0 1 auto; max-width: 76%; }
+.userBubble { padding: 12PX 18PX; border-radius: 12PX 12PX 3PX 12PX; background: #eef3e9; box-shadow: none; }
+.userText { color: #405a3a; font-size: 14PX; line-height: 1.8; }
+.avatarUser { display: none; }
+.answerActions { display: flex; gap: 18PX; margin-top: 16PX; color: #97a08e; font-size: 10PX; cursor: pointer; }
+.typingHint { font-size: 12PX; }
+.errorBubble { background: #fff4f1; padding: 12PX; }
+@media (max-width: 767PX) {
+ .messageRow { gap: 9PX; margin-bottom: 26PX; }
+ .bubbleWrap { max-width: calc(100% - 41PX); }
+ .userRow .bubbleWrap { max-width: 86%; }
+ .bubble, .userText { font-size: 14PX; }
+ .answerActions { gap: 12PX; flex-wrap: wrap; }
+}
+

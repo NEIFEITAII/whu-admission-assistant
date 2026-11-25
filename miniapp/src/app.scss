@@ -55,3 +55,6 @@ page {
     transform: translateY(-8rpx);
   }
 }
+
+@media (min-width: 768PX) { html { font-size: 37.5PX !important; } body:has(.whuChat) .taro-tabbar__tabbar { display: none; } }
+

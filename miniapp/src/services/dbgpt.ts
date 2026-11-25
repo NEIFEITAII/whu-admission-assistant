@@ -1,5 +1,5 @@
 import Taro from '@tarojs/taro';
-import { ChatMode } from '@/types/chat';
+import { AnswerSource, ChatMode } from '@/types/chat';
 import { sanitizeAnswer } from '@/utils/answerFormat';
 import { streamDemoAnswer } from '@/services/demo';
 
@@ -10,6 +10,7 @@ export function getBaseUrl(): string {
   try {
     const v = Taro.getStorageSync('whu_base_url');
     if (v === 'http://127.0.0.1:5670' || v === 'http://localhost:5670') return DEFAULT_BASE;
+    if (v === 'http://127.0.0.1:8767') return DEFAULT_BASE;
     if (v) return v;
   } catch {}
   return DEFAULT_BASE;
@@ -65,6 +66,8 @@ export async function createConversation(mode: ChatMode): Promise<string | null>
 }
 
 export interface StreamCallbacks {
+  onMeta?: (meta: {sources?: AnswerSource[]; seconds?: number}) => void;
+  onStatus?: (status: string) => void;
   // replace=true 时 text 为全量内容（非增量帧），直接覆盖当前回答
   onDelta: (text: string, replace?: boolean) => void;
   onDone: () => void;
@@ -225,6 +228,8 @@ function streamChatCompletionsReal(
       }
       try {
         const json = JSON.parse(payload);
+        if (typeof json.status === 'string') callbacks.onStatus?.(json.status);
+        if (Array.isArray(json.sources)) callbacks.onMeta?.({ sources: json.sources.map((s: any) => ({ ...s, url: /^https?:\/\//i.test(s.url || '') ? s.url : undefined })) });
         const choice = json?.choices?.[0];
         const delta = choice?.delta?.content;
         const message = choice?.message?.content;
@@ -260,6 +265,8 @@ function streamChatCompletionsReal(
       }
       try {
         const json = JSON.parse(payload);
+        if (typeof json.status === 'string') callbacks.onStatus?.(json.status);
+        if (Array.isArray(json.sources)) callbacks.onMeta?.({ sources: json.sources.map((s: any) => ({ ...s, url: /^https?:\/\//i.test(s.url || '') ? s.url : undefined })) });
         const t = json?.type;
         armSilenceTimer();
         if (t === 'done') {
@@ -428,6 +435,8 @@ function streamChatCompletionsReal(
             }
             try {
               const json = JSON.parse(payload);
+        if (typeof json.status === 'string') callbacks.onStatus?.(json.status);
+        if (Array.isArray(json.sources)) callbacks.onMeta?.({ sources: json.sources.map((s: any) => ({ ...s, url: /^https?:\/\//i.test(s.url || '') ? s.url : undefined })) });
               if (isReact) {
                 if (json?.type === 'final' && typeof json.content === 'string') {
                   finalContent = json.content;
@@ -512,6 +521,7 @@ export function streamChatCompletions(
   };
 
   const wrapped: StreamCallbacks = {
+    onMeta: callbacks.onMeta, onStatus: callbacks.onStatus,
     onDelta: (text, replace) => {
       if (text) sawContent = true;
       // 保持原有回调形态：未传 replace 时不额外传 undefined
@@ -542,3 +552,5 @@ export function streamChatCompletions(
     if (abortReal) abortReal();
   };
 }
+
+
